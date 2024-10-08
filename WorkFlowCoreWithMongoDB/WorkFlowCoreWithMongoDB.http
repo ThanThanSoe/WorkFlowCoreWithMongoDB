@@ -1,0 +1,6 @@
+@WorkFlowCoreWithMongoDB_HostAddress = http://localhost:5208
+
+GET {{WorkFlowCoreWithMongoDB_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
