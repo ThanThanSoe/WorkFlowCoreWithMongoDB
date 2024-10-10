@@ -2,9 +2,7 @@
 using MongoDB.Driver;
 using WorkflowCore.Interface;
 using WorkFlowCoreWithMongoDB.Models;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
+
 
 namespace WorkFlowCoreWithMongoDB.Controllers
 {
@@ -33,7 +31,7 @@ namespace WorkFlowCoreWithMongoDB.Controllers
            
             var actionInstance = await _workflowCollection.Find(w => w.ActionId == request.ActionId).SortByDescending(w => w.CreatedAt).FirstOrDefaultAsync();
 
-            var actionType = actionInstance.ActionType;
+           // var actionType = actionInstance.ActionType;
             if(actionInstance != null && workflowInstance == null)
             {
                 if(actionInstance.ActionId == request.ActionId && actionInstance.ActionType == request.ActionType)
@@ -71,7 +69,7 @@ namespace WorkFlowCoreWithMongoDB.Controllers
                 newWorkflowInstance.CreatedAt = DateTime.UtcNow;
                 newWorkflowInstance.Status = "StepACompleted";
                 newWorkflowInstance.ActionId = request.ActionId;
-                
+                await _workflowCollection.InsertOneAsync(newWorkflowInstance); // Insert a new workflow instance in MongoDB
             }
             else if(request.ActionType == "StepB")
             {
@@ -80,6 +78,7 @@ namespace WorkFlowCoreWithMongoDB.Controllers
                 newWorkflowInstance.CreatedAt = DateTime.UtcNow;
                 newWorkflowInstance.Status = "StepBCompleted"; // Initial status when workflow starts
                 newWorkflowInstance.ActionId = request.ActionId;
+                await _workflowCollection.InsertOneAsync(newWorkflowInstance); // Insert a new workflow instance in MongoDB
             }
             else if(request.ActionType == "StepC")
             {
@@ -89,7 +88,7 @@ namespace WorkFlowCoreWithMongoDB.Controllers
                 newWorkflowInstance.CreatedAt = DateTime.UtcNow;
                 newWorkflowInstance.Status = "StepCCompleted"; // Initial status when workflow starts
                 newWorkflowInstance.ActionId = request.ActionId;
-
+                await _workflowCollection.InsertOneAsync(newWorkflowInstance); // Insert a new workflow instance in MongoDB
             }
             else if(request.ActionType == "StepD")
             {
@@ -98,12 +97,13 @@ namespace WorkFlowCoreWithMongoDB.Controllers
                 newWorkflowInstance.CreatedAt = DateTime.UtcNow;
                 newWorkflowInstance.Status = "Complete"; // Initial status when workflow starts
                 newWorkflowInstance.ActionId = request.ActionId;
+                await _workflowCollection.InsertOneAsync(newWorkflowInstance); // Insert a new workflow instance in MongoDB
             }
-            // Insert a new workflow instance in MongoDB
+            else
+            {
+                return BadRequest(new { Message = $"Cannot start {request.ActionType}. ActionType is wrong." });
+            }
            
-
-            await _workflowCollection.InsertOneAsync(newWorkflowInstance);
-
             return Ok(new { WorkflowId = workflowId });
         }
 
