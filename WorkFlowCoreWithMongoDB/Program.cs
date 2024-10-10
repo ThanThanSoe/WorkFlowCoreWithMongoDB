@@ -1,41 +1,44 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using WorkflowCore.Interface;
 using WorkflowCore.Services;
-using WorkflowCore.Persistence.MongoDB;
-using WorkFlowCoreWithMongoDB.Models; // Ensure you include your models
-using WorkFlowCoreWithMongoDB.Workflows; // Ensure you include your workflows
+using WorkFlowCoreWithMongoDB.Models;
+using WorkFlowCoreWithMongoDB.Workflows;
+using WorkFlowCoreWithMongoDB.Workflows.Steps;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllers(); // Register the MVC services for controllers
+// Add services to the container.
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<IMongoClient, MongoClient>(sp => new MongoClient("mongodb://localhost:27017")); // Update with your MongoDB connection string
 
-// Add MongoDB settings to the service collection
-builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
-
-// Register the MongoClient with options
-builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
-    if (string.IsNullOrEmpty(settings.ConnectionString))
-    {
-        throw new ArgumentNullException(nameof(settings.ConnectionString), "MongoDB connection string is missing.");
-    }
-    return new MongoClient(settings.ConnectionString);
-});
-
-// Register Workflow Core services
+// Register Workflow Core services with MongoDB persistence
 builder.Services.AddWorkflow(x =>
 {
     var mongoSettings = builder.Configuration.GetSection("MongoDbSettings").Get<MongoDbSettings>();
     x.UseMongoDB(mongoSettings.ConnectionString, mongoSettings.DatabaseName);
-   // x.AddWorkflow<DynamicWorkflow,WorkflowRequest>(); // Ensure you use AddWorkflow here
+});
+
+// Add custom workflow
+builder.Services.AddTransient<StepA>();
+builder.Services.AddTransient<StepB>();
+builder.Services.AddTransient<StepC>();
+builder.Services.AddTransient<StepD>();
+
+// Configure CORS to allow all origins
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
 });
 
 var app = builder.Build();
@@ -47,12 +50,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Use the WorkflowHost
-var host = app.Services.GetRequiredService<IWorkflowHost>(); // Change to GetRequiredService
-host.Start(); // Start the workflow host
-host.RegisterWorkflow<DynamicWorkflow, WorkflowRequest>();
-host.StartWorkflow("DynamicWorkflow");
+// Enable CORS
+app.UseCors("AllowAll");
 
-app.MapControllers(); // Map the controllers to the routes
+app.UseRouting();
 
-app.Run(); // Run the application
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
+
+// Start the workflow host
+var workflowHost = app.Services.GetRequiredService<IWorkflowHost>();
+workflowHost.Start();
+workflowHost.RegisterWorkflow<DynamicWorkflow, WorkflowRequest>();
+
+app.Run();

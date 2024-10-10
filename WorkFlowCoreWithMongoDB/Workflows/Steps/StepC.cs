@@ -4,14 +4,14 @@ using WorkFlowCoreWithMongoDB.Models;
 
 namespace WorkFlowCoreWithMongoDB.Workflows.Steps
 {
-    public class StepA : StepBody
+    public class StepC : StepBody
     {
         public override ExecutionResult Run(IStepExecutionContext context)
         {
-            // Logic for Step A
-            Console.WriteLine("Executing Step A...");
+            // Logic for Step C
+            Console.WriteLine("Executing Step C...");
             var data = context.Workflow.Data as WorkflowRequest;
-            data.Status = "StepACompleted"; // Update status after completion
+            data.Status = "StepCCompleted"; // Update status after completion
             return ExecutionResult.Next();  // Proceed to the next step
         }
     }

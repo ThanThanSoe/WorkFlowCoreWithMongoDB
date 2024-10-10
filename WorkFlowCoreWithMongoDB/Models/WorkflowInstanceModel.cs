@@ -1,18 +1,17 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace WorkFlowCoreWithMongoDB.Models
 {
     public class WorkflowInstanceModel
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-
+        public ObjectId Id { get; set; }
         public string WorkflowId { get; set; }
         public string ActionType { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string Status { get; set; } // Track status like "Running", "Completed", "Failed"
-        public string CurrentStepId { get; set; } // Add this to track the current step
+        public string Status { get; set; }       // e.g., Running, StepACompleted, StepBCompleted, etc.
+        public string CurrentStepId { get; set; } // Optional: Track current step
+        public string ActionId { get; set; }
     }
 }
